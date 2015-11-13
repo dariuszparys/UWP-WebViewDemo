@@ -1,0 +1,84 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>WebView Demo</title>
+	<meta charset="utf-8" />
+
+    <script>
+
+        var messages;
+
+        document.addEventListener("DOMContentLoaded", function () {
+            messages = document.querySelector("#messages");
+            document.querySelector("#fullAccess").addEventListener("click", fullAccessAction);
+            document.querySelector("#limitedAccess").addEventListener("click", limitedAccessAction);
+            document.querySelector("#clearLog").addEventListener("click", () => {
+                if (messages) {
+                    messages.innerHTML = "";
+                }
+            });
+        });
+
+        function logMessage(message) {
+            if (messages) {
+                var logElement = document.createElement("p");
+                logElement.textContent = message;
+                messages.appendChild(logElement);
+                
+            }
+        }
+
+        function fullAccessAction() {
+            logMessage("fullAccessAction called");
+            if (window.Windows) {
+                logMessage("Running in UWP");
+                var picker = new Windows.Storage.Pickers.FileOpenPicker();
+                picker.viewMode = Windows.Storage.Pickers.PickerViewMode.thumbnail;
+                picker.suggestedStartLocation = Windows.Storage.Pickers.PickerLocationId.picturesLibrary;
+                picker.fileTypeFilter.replaceAll([".jpg", ".jpeg", ".png", ".bmp"]);
+
+                picker.pickSingleFileAsync().done(function (file) {
+                    if (file) {
+                        // Application now has read/write access to the picked file, setting image to lockscreen.
+                        Windows.System.UserProfile.LockScreen.setImageFileAsync(file).done(function (imageSet) {
+                            logMessage("File \"" + file.name + "\" set as lock screen image.");
+                        },
+                        function (imageSet) {
+                            logMessage("Setting the lock screen image failed.  Make sure your copy of Windows is activated.");
+                        });
+                    } else {
+                        logMessage("No file was selected using the picker.");
+                    }
+                });
+            } else {
+                logMessage("This is the web, what do you expect?");
+            }
+        }
+
+        function limitedAccessAction() {
+            logMessage("limitedAccessAction called");
+
+            var toast = window.toastApi;
+            if (toast) {
+                toast.showMessage("Called your Windows Runtime Component", 0);
+            } else {
+                logMessage(toast + " not found in DOM");
+            }
+        }
+
+    </script>
+
+</head>
+<body>
+    <h1>WebView Demo</h1>
+    <p>This website demonstrates various key aspects of access control when running in a webview through an UWP app.</p>
+    <p>Absolutely no dependencies to any other frameworks or css layouts, that's why this looks like crap. Also scripts are
+    in the same document, which is crappy too.</p>
+    <div>
+        <button id="fullAccess">Change your lockscreen</button>
+        <button id="limitedAccess">Show local toast notification</button>
+        <button id="clearLog">Clear Log</button>
+    </div>
+    <div id="messages"></div>
+</body>
+</html>
